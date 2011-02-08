@@ -15,6 +15,11 @@ module OpenAmplify
       OpenAmplify.validate_client!(self)
       Response.new(self, :query => query.merge(:inputText => text), :method => @options[:method])
     end
+
+    def analyze_url(url)
+      OpenAmplify.validate_client!(self)
+      Response.new(self, :query => query.merge(:sourceURL => url), :method => @options[:method])
+    end
     
     %w(api_key analysis api_url method).each do |attr|
       class_eval <<-EOS
