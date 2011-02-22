@@ -11,14 +11,16 @@ module OpenAmplify
       @options.merge!(OpenAmplify.symbolize_keys(options))
     end
 
-    def analyze_text(text)
+    def analyze_text(text, search_terms = nil)
+      @options[:analysis] = "search" if search_terms
       OpenAmplify.validate_client!(self)
-      Response.new(self, :query => query.merge(:inputText => text), :method => @options[:method])
+      Response.new(self, :query => query.merge(:inputText => text, :searchTerms => search_terms), :method => @options[:method])
     end
 
-    def analyze_url(url)
+    def analyze_url(url, search_terms = nil)
+      @options[:analysis] = "search" if search_terms
       OpenAmplify.validate_client!(self)
-      Response.new(self, :query => query.merge(:sourceURL => url), :method => @options[:method])
+      Response.new(self, :query => query.merge(:sourceURL => url, :searchTerms => search_terms), :method => @options[:method])
     end
     
     %w(api_key analysis api_url method).each do |attr|
@@ -106,6 +108,14 @@ module OpenAmplify
       EOS
     end
 
+    def matches
+      items = response && response['Search']
+      if items.is_a? Hash
+        items = [items["SearchResult"]]
+      end
+      items
+    end
+
     def top_topics
       items = response && response['Topics']['TopTopics']
     end
@@ -142,8 +152,7 @@ module OpenAmplify
     end
   
     def fetch_response
-      response = fetch_as_format(:json)
-      result   = JSON.parse(response)
+      result   = JSON.parse(fetch_as_format(:json))
 
       if analysis = @options[:query][:analysis]
         name = analysis.sub(/./){ |s| s.upcase }
